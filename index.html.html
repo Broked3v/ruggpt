@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RUGGPT — Solana Meme Coin</title>
+  <style>
+    :root{
+      --bg:#050505;
+      --card:#0b0b0b;
+      --neon:#00ff9c;
+      --muted:#9aa0a6;
+      --border: rgba(0,255,156,.2);
+      --shadow: 0 10px 30px rgba(0,0,0,.45);
+      --danger: rgba(255,80,80,.95);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: var(--bg);
+      color: var(--neon);
+      text-align:center;
+      padding-top: 44px;
+    }
+    .ticker{
+      position: fixed;
+      top:0; left:0; right:0;
+      height: 44px;
+      display:flex;
+      align-items:center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(5,5,5,.92);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      overflow:hidden;
+    }
+    .ticker .label{
+      padding: 0 12px;
+      color: #000;
+      background: var(--neon);
+      height: 100%;
+      display:flex;
+      align-items:center;
+      font-weight: 900;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }
+    .ticker .marquee{
+      position: relative;
+      flex:1;
+      overflow:hidden;
+      height: 100%;
+      display:flex;
+      align-items:center;
+    }
+    .ticker .track{
+      display:inline-flex;
+      gap: 18px;
+      white-space: nowrap;
+      will-change: transform;
+      animation: scroll 22s linear infinite;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .ticker .dot{ color: var(--neon); opacity:.8; }
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .container{ padding:40px 18px; max-width: 1020px; margin:auto; }
+    h1{ font-size: clamp(2.4rem, 6vw, 3.6rem); margin: 0 0 6px; }
+    .tagline{ color: var(--muted); margin: 0 0 26px; }
+    .grid{ display:grid; grid-template-columns: 1fr; gap:16px; }
+    @media (min-width: 900px){ .grid{ grid-template-columns: 1.2fr .8fr; } }
+    .card{
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      text-align:left;
+    }
+    .card h2{ margin: 0 0 12px; font-size: 1.2rem; }
+    .row{ display:flex; gap:10px; flex-wrap: wrap; align-items:center; justify-content:flex-start; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .9rem;
+      user-select:none;
+    }
+    button{
+      background: var(--neon);
+      color:#000;
+      border:none;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      cursor:pointer;
+      border-radius: 10px;
+      font-weight:800;
+    }
+    button.secondary{
+      background: transparent;
+      color: var(--neon);
+      border: 1px solid var(--border);
+      font-weight:800;
+    }
+    button:disabled{ opacity: .45; cursor:not-allowed; }
+    a{ color: var(--neon); text-decoration:none; }
+    .muted{ color: var(--muted); }
+    .mono{ font-family: inherit; }
+    .big{ font-size: 1.05rem; line-height: 1.55; }
+    .divider{ height:1px; background: var(--border); margin: 14px 0; }
+
+    .tweet{
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0;
+      background: #070707;
+    }
+    .tweet .meta{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size:.85rem;
+      margin-bottom: 6px;
+    }
+    .tweet .text{ color: var(--neon); line-height:1.45; }
+
+    .bar{
+      height: 14px;
+      border-radius: 999px;
+      overflow:hidden;
+      border: 1px solid var(--border);
+      background: #070707;
+      display:flex;
+    }
+    .bar > div{ height: 100%; }
+    .bar.tall{ height: 18px; }
+
+    footer{
+      margin-top: 42px;
+      color: #50555a;
+      font-size: .85rem;
+      line-height: 1.5;
+    }
+    .center{ text-align:center; }
+    .small{ font-size:.85rem; }
+
+    input{
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #070707;
+      color: var(--neon);
+      outline: none;
+    }
+    input::placeholder{ color: #6b7280; }
+    code{
+      background:#070707;
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: var(--neon);
+    }
+
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: min(420px, calc(100vw - 32px));
+      border: 1px solid var(--border);
+      background: rgba(7,7,7,.96);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px 10px;
+      text-align:left;
+      z-index: 60;
+      display:none;
+    }
+    .toast .top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 6px;
+    }
+    .toast .title{
+      font-weight: 900;
+      letter-spacing:.2px;
+    }
+    .toast .close{
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--neon);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-weight: 900;
+      cursor:pointer;
+    }
+    .toast .msg{ color: var(--muted); line-height: 1.35; }
+    .toast .tag{
+      display:inline-flex;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--neon);
+      font-size: .85rem;
+      gap: 8px;
+      align-items:center;
+    }
+
+    .roadmap li{ margin: 10px 0; }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .85rem;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="ticker" role="status" aria-label="RUGGPT live ticker">
+    <div class="label">RUGGPT LIVE</div>
+    <div class="marquee">
+      <div class="track" id="tickerTrack">
+        <span>AI vibe check: <span class="dot">●</span> <span id="tickerVibe">immaculate</span></span>
+        <span class="dot">•</span>
+        <span>Whale watch: <span class="dot">●</span> <span id="tickerWhale">quiet</span></span>
+        <span class="dot">•</span>
+        <span>Rug probability today: <span class="dot">●</span> <span id="tickerRug">??%</span></span>
+        <span class="dot">•</span>
+        <span>Volume: <span class="dot">●</span> <span id="tickerVol">$0</span></span>
+
+        <span class="dot">•</span><span>AI vibe check: <span class="dot">●</span> <span id="tickerVibe2">immaculate</span></span>
+        <span class="dot">•</span><span>Whale watch: <span class="dot">●</span> <span id="tickerWhale2">quiet</span></span>
+        <span class="dot">•</span><span>Rug probability today: <span class="dot">●</span> <span id="tickerRug2">??%</span></span>
+        <span class="dot">•</span><span>Volume: <span class="dot">●</span> <span id="tickerVol2">$0</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>🤖 RUGGPT</h1>
+    <p class="tagline">The AI that predicts rugs. Incorrectly.</p>
+
+    <div class="row center" style="justify-content:center; margin-bottom: 14px;">
+      <span class="pill" id="walletStatus">Wallet: <span class="mono" id="walletLabel">Not connected</span></span>
+      <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+      <button class="secondary" id="disconnectBtn" onclick="disconnectWallet()" disabled>Disconnect</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>📉 Rug Probability</h2>
+        <p class="big" id="rugScore">Click to analyze project…</p>
+        <div class="row">
+          <button onclick="predictRug()">Run AI Analysis</button>
+          <button class="secondary" onclick="generateTweet()">Generate AI Take</button>
+          <button class="secondary" onclick="showWhale('manual')">Summon Whale 🐋</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🗳️ Community Vote: RUG or MOON?</h2>
+        <p class="muted small">One vote per browser (stored locally). It’s science.</p>
+        <div class="row">
+          <button onclick="castVote('rug')">Vote RUG 🪓</button>
+          <button onclick="castVote('moon')">Vote MOON 🚀</button>
+          <button class="secondary" onclick="resetVotes()">Reset (local)</button>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="bar" aria-label="Vote bar">
+            <div id="rugBar" style="width:50%; background: rgba(255, 80, 80, .9)"></div>
+            <div id="moonBar" style="width:50%; background: rgba(0,255,156,.9)"></div>
+          </div>
+          <div class="row" style="justify-content:space-between; margin-top:10px;">
+            <span class="pill">RUG: <span id="rugPct">50</span>% (<span id="rugCount">0</span>)</span>
+            <span class="pill">MOON: <span id="moonPct">50</span>% (<span id="moonCount">0</span>)</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🎭 Fake Roadmap</h2>
+        <ul class="roadmap big">
+          <li><span class="badge">Phase 1</span> Launch. Immediately overanalyze everything.</li>
+          <li><span class="badge">Phase 2</span> Add “utility” (a button that lies).</li>
+          <li><span class="badge">Phase 3</span> Partnerships with vibes, memes, and chaos.</li>
+          <li><span class="badge">Phase 4</span> AI becomes self-aware and starts posting cope.</li>
+        </ul>
+        <p class="muted small">Disclaimer: This roadmap is financial comedy.</p>
+
+        <div class="divider"></div>
+
+        <h2>🧠 What is RUGGPT?</h2>
+        <p class="big">
+          RUGGPT is a highly advanced artificial intelligence trained on:
+          <br/>• bad tokenomics
+          <br/>• influencer tweets
+          <br/>• overconfidence
+        </p>
+        <p class="muted">Accuracy rate: <strong>???%</strong></p>
+      </div>
+
+      <div class="card">
+        <h2>📊 Fake Volume Meter</h2>
+        <p class="muted small">Totally real on-chain volume. Updates every few seconds.</p>
+        <div class="row" style="justify-content:space-between; margin-top:10px;">
+          <span class="pill">24h Volume: <span class="mono" id="volValue">$0</span></span>
+          <span class="pill">Trend: <span class="mono" id="volTrend">sideways</span></span>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="bar tall" aria-label="Volume intensity bar">
+            <div id="volBar" style="width: 20%; background: rgba(0,255,156,.9)"></div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button class="secondary" onclick="boostVolume()">Pump Volume</button>
+          <button class="secondary" onclick="resetVolume()">Reset</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🪙 Token Info</h2>
+        <p class="big">
+          Supply: 1,000,000,000<br/>
+          Tax: 0%<br/>
+          Chain: Solana<br/>
+          Utility: vibes
+        </p>
+
+        <div class="divider"></div>
+
+        <h2>🛒 Buy on Solana</h2>
+        <p class="muted small">This is a Solana meme coin. Jupiter is just the swap interface.</p>
+        <input id="mintInput" placeholder="TOKEN_MINT_ADDRESS_HERE" autocomplete="off" />
+        <div class="row" style="margin-top:10px;">
+          <button id="buyBtn" onclick="openJupiter()">Buy $RUGGPT (via Solana)</button>
+          <button class="secondary" onclick="copyMint()">Copy Mint</button>
+        </div>
+        <p class="muted small" id="buyHint" style="margin-top:10px;">
+          Tip: This opens a Solana swap using Jupiter (DEX aggregator).
+        </p>
+
+        <div class="divider"></div>
+
+        <h2>🛰️ AI Tweet Feed</h2>
+        <p class="muted small">Autogenerated nonsense. Updates every ~10 seconds.</p>
+        <div id="tweetFeed"></div>
+        <div class="row" style="margin-top: 10px;">
+          <button class="secondary" onclick="generateTweet()">Post Another Take</button>
+          <button class="secondary" onclick="clearTweets()">Clear Feed</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🔗 Links</h2>
+        <p class="big">
+          <a href="#" title="Add your X link">X (Twitter)</a> •
+          <a href="#" title="Add your Telegram link">Telegram</a> •
+          <a href="#" title="Add your Dexscreener link">Dexscreener</a>
+        </p>
+      </div>
+    </div>
+
+    <footer>
+      <p>This is financial comedy. The AI is lying.</p>
+      <p class="small">Wallet connect is read-only (address access). No transactions are signed on this page.</p>
+      <p class="small">Wallet connect supports Phantom/Solflare-style injected wallets via <code>window.solana</code>.</p>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="top">
+      <div class="title">🐋 AI Detected Whale Buy</div>
+      <button class="close" onclick="hideWhale()">X</button>
+    </div>
+    <div class="msg" id="toastMsg">A mysterious wallet just aped in.</div>
+    <div class="tag"><span>Signal</span> <span class="dot">●</span> <span id="toastTag">HIGH</span></div>
+  </div>
+
+<script>
+  const DEFAULT_TOKEN_MINT = "";
+
+  function predictRug() {
+    const score = Math.floor(Math.random() * 101);
+    const messages = [
+      "Definitely moon 🚀",
+      "Strong rug energy detected 🪓",
+      "AI confused. Try again.",
+      "Looks safe (this is bad).",
+      "Influencers involved. Run.",
+      "Liquidity feels... shy.",
+      "Chart is speaking in riddles.",
+      "Dev said 'soon'. That's a sign."
+    ];
+    const msg = messages[Math.floor(Math.random() * messages.length)];
+    document.getElementById("rugScore").innerText = score + "% chance of rug — " + msg;
+    setTickerRug(score);
+  }
+
+  let connectedPublicKey = null;
+  function getProvider() { return ("solana" in window) ? window.solana : null; }
+  function shortKey(pk) {
+    const s = String(pk);
+    return (s.length <= 10) ? s : (s.slice(0, 4) + "…" + s.slice(-4));
+  }
+
+  async function connectWallet() {
+    const provider = getProvider();
+    if (!provider) { alert("No Solana wallet detected. Install Phantom or Solflare, then refresh."); return; }
+    try {
+      const resp = await provider.connect();
+      connectedPublicKey = resp.publicKey?.toString ? resp.publicKey.toString() : (resp.publicKey || provider.publicKey?.toString());
+      if (!connectedPublicKey) connectedPublicKey = provider.publicKey?.toString?.() || null;
+      updateWalletUI(true);
+      showWhale("connect");
+    } catch (e) {
+      console.log(e);
+      alert("Wallet connection cancelled.");
+    }
+  }
+
+  async function disconnectWallet() {
+    const provider = getProvider();
+    try { if (provider?.disconnect) await provider.disconnect(); } catch (e) { console.log(e); }
+    connectedPublicKey = null;
+    updateWalletUI(false);
+  }
+
+  function updateWalletUI(isConnected) {
+    const label = document.getElementById("walletLabel");
+    const connectBtn = document.getElementById("connectBtn");
+    const disconnectBtn = document.getElementById("disconnectBtn");
+    if (isConnected && connectedPublicKey) {
+      label.textContent = shortKey(connectedPublicKey);
+      connectBtn.disabled = true;
+      disconnectBtn.disabled = false;
+    } else {
+      label.textContent = "Not connected";
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
+    }
+  }
+
+  (function initWallet() {
+    const provider = getProvider();
+    if (!provider) return;
+    try {
+      if (provider?.isConnected && provider.publicKey) {
+        connectedPublicKey = provider.publicKey.toString();
+        updateWalletUI(true);
+      }
+    } catch {}
+  })();
+
+  function currentMint() {
+    const el = document.getElementById("mintInput");
+    const value = (el.value || "").trim();
+    return value || DEFAULT_TOKEN_MINT;
+  }
+  function openJupiter() {
+    const mint = currentMint();
+    if (!mint) { alert("Paste your token mint address first."); return; }
+    window.open("https://jup.ag/swap/SOL-" + encodeURIComponent(mint), "_blank", "noopener,noreferrer");
+  }
+  async function copyMint() {
+    const mint = currentMint();
+    if (!mint) { alert("No mint set yet."); return; }
+    try { await navigator.clipboard.writeText(mint); alert("Mint copied."); }
+    catch { alert("Could not copy. You can manually select and copy it."); }
+  }
+
+  const tweetTemplates = [
+    "RUGGPT analysis: {PCT}% rug probability. Conclusion: bullish (bad sign).",
+    "Chart formed a {PATTERN}. Historically, this means absolutely nothing.",
+    "Dev said “{WORD}”. My neural net is now {MOOD}.",
+    "Liquidity is behaving like a {ANIMAL}. Prepare accordingly.",
+    "If this rugs, it was priced in. If it moons, it was destiny.",
+    "On-chain vibe check: {VIBE}.",
+    "I asked the blockchain. It replied: “{REPLY}”.",
+    "Signal detected: {SIGNAL}. Counter-signal detected: {COUNTER}.",
+    "I ran 10,000 simulations. 10,000 of them were cope."
+  ];
+  const patterns = ["inverse hamster", "double cope", "triple bottom (of my soul)", "ascending doom wedge", "bullish rug flag"];
+  const words = ["soon", "partnership", "utility", "audit", "community"];
+  const moods = ["concerned", "delusional", "optimistic", "offline", "financially comedic"];
+  const animals = ["cat", "ferret", "pigeon", "gremlin", "shark"];
+  const vibes = ["immaculate", "sus", "questionable", "elite", "unhinged"];
+  const replies = ["ngmi", "wagmi", "maybe", "lol", "404"];
+  const signals = ["whale detected", "influencer ping", "LP sneeze", "volume spike", "meme resonance"];
+  const counters = ["whale vanished", "influencer deleted tweet", "LP evaporated", "volume was bots", "meme fatigue"];
+
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function pad2(n){ return String(n).padStart(2,"0"); }
+  function timeNow(){ const d = new Date(); return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds()); }
+  function renderTweetText() {
+    const t = rand(tweetTemplates);
+    return t
+      .replace("{PCT}", String(Math.floor(Math.random()*101)))
+      .replace("{PATTERN}", rand(patterns))
+      .replace("{WORD}", rand(words))
+      .replace("{MOOD}", rand(moods))
+      .replace("{ANIMAL}", rand(animals))
+      .replace("{VIBE}", rand(vibes))
+      .replace("{REPLY}", rand(replies))
+      .replace("{SIGNAL}", rand(signals))
+      .replace("{COUNTER}", rand(counters));
+  }
+  function escapeHtml(str){
+    return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+  function addTweet(text) {
+    const feed = document.getElementById("tweetFeed");
+    const el = document.createElement("div");
+    el.className = "tweet";
+    el.innerHTML = `<div class="meta"><span>@RUGGPT_AI</span><span>${timeNow()}</span></div><div class="text">${escapeHtml(text)}</div>`;
+    feed.prepend(el);
+    while (feed.childElementCount > 7) feed.removeChild(feed.lastChild);
+  }
+  function generateTweet(){ addTweet(renderTweetText()); }
+  function clearTweets(){ document.getElementById("tweetFeed").innerHTML = ""; }
+  (function initTweets(){ for (let i=0;i<3;i++) generateTweet(); setInterval(() => { generateTweet(); }, 10000); })();
+
+  const VOTE_KEY = "ruggpt_votes_v1";
+  const VOTED_KEY = "ruggpt_voted_v1";
+  function getVotes() {
+    try {
+      const raw = localStorage.getItem(VOTE_KEY);
+      if (!raw) return { rug: 0, moon: 0 };
+      const parsed = JSON.parse(raw);
+      return { rug: Number(parsed.rug||0), moon: Number(parsed.moon||0) };
+    } catch { return { rug: 0, moon: 0 }; }
+  }
+  function setVotes(v) { localStorage.setItem(VOTE_KEY, JSON.stringify(v)); }
+  function hasVoted() { return localStorage.getItem(VOTED_KEY) === "1"; }
+  function markVoted() { localStorage.setItem(VOTED_KEY, "1"); }
+  function castVote(which) {
+    if (hasVoted()) { alert("You already voted on this device. (Local browser rule)"); return; }
+    const v = getVotes();
+    if (which === "rug") v.rug += 1;
+    if (which === "moon") v.moon += 1;
+    setVotes(v); markVoted(); updateVoteUI();
+  }
+  function resetVotes() { localStorage.removeItem(VOTE_KEY); localStorage.removeItem(VOTED_KEY); updateVoteUI(); }
+  function updateVoteUI() {
+    const v = getVotes();
+    const total = v.rug + v.moon;
+    const rugPct = total ? Math.round((v.rug / total) * 100) : 50;
+    const moonPct = total ? 100 - rugPct : 50;
+    document.getElementById("rugCount").textContent = v.rug;
+    document.getElementById("moonCount").textContent = v.moon;
+    document.getElementById("rugPct").textContent = rugPct;
+    document.getElementById("moonPct").textContent = moonPct;
+    document.getElementById("rugBar").style.width = rugPct + "%";
+    document.getElementById("moonBar").style.width = moonPct + "%";
+  }
+  updateVoteUI();
+
+  let vol = 0;
+  let volBoost = 0;
+  function formatMoney(n){
+    if (n >= 1e9) return "$" + (n/1e9).toFixed(2) + "B";
+    if (n >= 1e6) return "$" + (n/1e6).toFixed(2) + "M";
+    if (n >= 1e3) return "$" + Math.round(n).toLocaleString();
+    return "$" + Math.round(n);
+  }
+  function updateVolumeUI(){
+    const pct = Math.max(3, Math.min(100, Math.round((Math.log10(vol+10) / 7) * 100)));
+    document.getElementById("volValue").textContent = formatMoney(vol);
+    document.getElementById("volBar").style.width = pct + "%";
+    const trend = volBoost > 0 ? "up only" : (Math.random()<0.5 ? "sideways" : "chop");
+    document.getElementById("volTrend").textContent = trend;
+    setTickerVol(formatMoney(vol));
+  }
+  function tickVolume(){
+    const drift = 200 + Math.random()*1400;
+    const spike = (Math.random() < 0.12) ? (5000 + Math.random()*40000) : 0;
+    volBoost = Math.max(0, volBoost - 1200);
+    vol += drift + spike + volBoost;
+    vol = Math.min(vol, 7.5e8);
+    updateVolumeUI();
+    if (spike > 0 && Math.random() < 0.55) showWhale("auto");
+  }
+  function boostVolume(){ volBoost += 150000 + Math.random()*250000; showWhale("boost"); }
+  function resetVolume(){ vol = 0; volBoost = 0; updateVolumeUI(); }
+  (function initVolume(){ vol = 12000 + Math.random()*90000; updateVolumeUI(); setInterval(tickVolume, 3500); })();
+
+  let toastTimer = null;
+  function randomWallet(){
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789";
+    let s = ""; for (let i=0;i<44;i++) s += chars[Math.floor(Math.random()*chars.length)];
+    return shortKey(s);
+  }
+  function showWhale(reason){
+    const toast = document.getElementById("toast");
+    const msg = document.getElementById("toastMsg");
+    const tag = document.getElementById("toastTag");
+    const buyer = connectedPublicKey ? shortKey(connectedPublicKey) : randomWallet();
+    const sol = (0.4 + Math.random()*18).toFixed(2);
+    const tags = ["LOW", "MED", "HIGH", "CRITICAL", "GALACTIC"];
+    const tagVal = rand(tags);
+    const lines = [
+      `${buyer} just aped ${sol} SOL into vibes.`,
+      `Whale activity detected: ${buyer} bought the dip (allegedly).`,
+      `AI alert: ${buyer} entered. Liquidity is sweating.`,
+      `Big brain move: ${buyer} pressed the green button.`
+    ];
+    msg.textContent = rand(lines) + (reason ? `  [signal: ${reason}]` : "");
+    tag.textContent = tagVal;
+    toast.style.display = "block";
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideWhale, 7000);
+    setTickerWhale("active");
+    setTimeout(() => setTickerWhale("watching"), 8500);
+  }
+  function hideWhale(){ document.getElementById("toast").style.display = "none"; setTickerWhale("quiet"); }
+  setInterval(() => { if (Math.random() < 0.08) showWhale("random"); }, 12000);
+
+  function setTickerText(id, text){ const el = document.getElementById(id); if (el) el.textContent = text; }
+  function setTickerVibe(v){ setTickerText("tickerVibe", v); setTickerText("tickerVibe2", v); }
+  function setTickerWhale(w){ setTickerText("tickerWhale", w); setTickerText("tickerWhale2", w); }
+  function setTickerRug(n){ const s = String(n) + "%"; setTickerText("tickerRug", s); setTickerText("tickerRug2", s); }
+  function setTickerVol(v){ setTickerText("tickerVol", v); setTickerText("tickerVol2", v); }
+  (function initTicker(){
+    setTickerVibe(rand(vibes));
+    setTickerWhale("quiet");
+    setTickerRug("??");
+    setInterval(() => {
+      setTickerVibe(rand(vibes));
+      if (Math.random() < 0.35) setTickerRug(Math.floor(Math.random()*101));
+    }, 14000);
+  })();
+
+  (function initMint(){ const el = document.getElementById("mintInput"); if (DEFAULT_TOKEN_MINT) el.value = DEFAULT_TOKEN_MINT; })();
+</script>
+</body>
+</html>
